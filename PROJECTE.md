@@ -87,13 +87,35 @@ Han de ser **gestionables des de l'aplicació** (no fixes al codi), ja que en el
 4. Pressupost anual.
 5. Dashboard i gràfics.
 
+## Mòdul futur: Receptari / Menús setmanals / Llista de compra (PRO)
+
+Mòdul planificat per a **després** que el nucli de control de despeses estigui acabat i estable (dashboard, pressupost anual, desviacions, gràfiques per categoria/subcategoria).
+
+**Decisió**: es construeix dins del mateix projecte (mateix Laravel + Bootstrap + Vue + Inertia + SQLite), però com un mòdul clarament separat (rutes, controllers i models propis).
+
+- **Per què al mateix projecte i no a part**: comparteix infraestructura (Laravel, Bootstrap/Vue/Inertia, hosting, SQLite). Hi ha un punt de connexió real amb el control de despeses: la llista de compra setmanal i el control de preus per producte al súper (categoria "Menjar: Supers") són conceptualment la mateixa dada (producte, preu, súper, data). Si en el futur es vol que marcar un ingredient com a comprat generi automàticament la despesa a la categoria "Menjar", només té sentit si viu al mateix sistema. Aquesta connexió és **opcional**, no obligatòria: el mòdul ha de poder viure sense ella.
+- **Per què separat i no barrejat amb la lògica de despeses**: és un domini diferent (contingut/receptes vs. finances) i no ha de bloquejar ni complicar el que ja funciona del control de despeses.
+
+**Talls verticals independents** (cada pas és un lliurable complet i útil per si sol):
+
+1. **Receptari bàsic**: ingredients, tipus de plat (primers, segons, postres), dietes de règim, ingredient principal o categoria (pasta, arròs, amanides, etc.). Útil per si sol com a llibre de receptes digital.
+2. **Calendari de menús setmanal** (dilluns a diumenge): selecció de receptes ja existents del receptari per assignar-les als dies de la setmana. Només té sentit un cop hi ha receptes carregades (pas 1).
+3. **Llista de compra automàtica**: generada agregant els ingredients de totes les receptes del menú de la setmana. Pas amb més valor pràctic (estalvia fer la llista a mà).
+4. **(Opcional, futur) Enllaç llista de compra → despeses**: en marcar un producte com a comprat, oferir crear/pre-omplir una despesa a la categoria "Menjar".
+
+**Ordre recomanat**: acabar primer el nucli de despeses (Fase 1: dashboard, pressupost anual, desviacions, gràfiques per categoria i subcategoria, control de preus per producte) abans de començar aquest mòdul, seguint el principi ja establert de desenvolupament incremental.
+
 ## Estat actual
 
 - ✅ Fase 0 — Instal·lació base: Laravel 13 + Inertia + Vue 3 + Bootstrap + lucide-vue-next + Pest + Vitest, tot configurat i verificat (build, tests backend i frontend passant).
-- ⏳ Pendent: proposta d'estructura de base de dades (taules/camps/relacions) per a despeses, categories, subcategories i pressupostos — **esperant aprovació de l'usuari** abans de crear migracions.
+- ✅ Fase 1 — Models i migracions: taules `categories`, `subcategories`, `expenses`, `budgets` amb les seves relacions (`Category hasMany Subcategory`, `Subcategory belongsTo Category` + `hasMany Expense/Budget`, `Expense/Budget belongsTo Subcategory`). Pressupost **mensual per subcategoria** (`budgets`: `subcategory_id` + `year` + `month`, únic). Seeder `CategorySeeder` amb les 11 categories inicials i les seves subcategories. 14 tests Pest a `tests/Feature/Models/` i `tests/Feature/CategorySeederTest.php`, tots passant. Migracions aplicades a la BD de desenvolupament.
+- ⏳ Pendent: Fase 2 — CRUD de despeses (formulari ràpid, llistat, edició, esborrat).
+- 📌 Planificat (no iniciat): mòdul Receptari / Menús setmanals / Llista de compra, un cop el nucli de despeses estigui acabat (vegeu secció anterior).
 
 ## Registre de decisions
 
 | Data | Decisió |
 |---|---|
 | 2026-09-11 | Instal·lació inicial del projecte amb l'stack acordat. Substitució de Tailwind (per defecte a l'esquelet de Laravel) per Bootstrap, segons especificació. Substitució de PHPUnit per Pest. |
+| 2026-09-19 | Planificació del mòdul futur Receptari / Menús setmanals / Llista de compra (PRO): es farà dins del mateix projecte com a mòdul separat, després d'acabar el nucli de control de despeses. |
+| 2026-09-19 | Fase 1 (models i migracions) implementada. Pressupost confirmat com a **mensual per subcategoria** (no anual ni per categoria); els totals per categoria i any es calculen sumant, no es guarden per separat. |
