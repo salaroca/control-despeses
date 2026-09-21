@@ -25,7 +25,7 @@ function makeForm(initial) {
 }
 
 vi.mock('@inertiajs/vue3', () => ({
-    usePage: () => ({ props: { categoriesList } }),
+    usePage: () => ({ props: { categoriesList }, url: '/despeses' }),
     useForm: (initial) => makeForm(initial),
     router: { delete: vi.fn() },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },

@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Trash2, Wallet } from 'lucide-vue-next';
+import { Pencil, Trash2 } from 'lucide-vue-next';
+import AppLayout from '../../Layouts/AppLayout.vue';
 import ExpenseForm from './Partials/ExpenseForm.vue';
 
 defineProps({
@@ -77,11 +78,9 @@ function formatDate(date) {
 </script>
 
 <template>
+    <AppLayout>
     <div class="container py-4" style="max-width: 900px;">
-        <div class="d-flex align-items-center gap-2 mb-4">
-            <Wallet :size="32" class="text-primary" />
-            <h1 class="h3 mb-0">Despeses</h1>
-        </div>
+        <h1 class="h3 mb-4">Despeses</h1>
 
         <div class="card mb-4">
             <div class="card-body">
@@ -163,4 +162,5 @@ function formatDate(date) {
             </Link>
         </div>
     </div>
+    </AppLayout>
 </template>
