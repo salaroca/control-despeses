@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Trash2 } from 'lucide-vue-next';
+import { IconPencil, IconTrash } from '@tabler/icons-vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
 const page = usePage();
@@ -88,14 +88,24 @@ function destroySubcategory(subcategory) {
 
 <template>
     <AppLayout>
-    <div class="container py-4" style="max-width: 900px;">
-        <h1 class="h3 mb-4">Categories</h1>
-
+    <div class="page-header d-print-none">
+        <div class="container-xl">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <h2 class="page-title">Categories</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-body">
+    <div class="container-xl">
         <div v-if="deleteError" class="alert alert-danger">{{ deleteError }}</div>
 
         <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Afegeix una categoria</h3>
+            </div>
             <div class="card-body">
-                <h2 class="h6 mb-3">Afegeix una categoria</h2>
                 <form class="row g-2 align-items-start" @submit.prevent="submitCreateCategory">
                     <div class="col-12 col-md-6">
                         <input
@@ -118,8 +128,10 @@ function destroySubcategory(subcategory) {
         </div>
 
         <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Afegeix una subcategoria</h3>
+            </div>
             <div class="card-body">
-                <h2 class="h6 mb-3">Afegeix una subcategoria</h2>
                 <form class="row g-2 align-items-start" @submit.prevent="submitCreateSubcategory">
                     <div class="col-12 col-md-4">
                         <select v-model="createSubcategoryForm.category_id" class="form-select form-select-lg">
@@ -185,7 +197,7 @@ function destroySubcategory(subcategory) {
                             aria-label="Edita categoria"
                             @click="startEditCategory(category)"
                         >
-                            <Pencil :size="16" />
+                            <IconPencil :size="16" />
                         </button>
                         <button
                             type="button"
@@ -193,7 +205,7 @@ function destroySubcategory(subcategory) {
                             aria-label="Elimina categoria"
                             @click="destroyCategory(category)"
                         >
-                            <Trash2 :size="16" />
+                            <IconTrash :size="16" />
                         </button>
                     </div>
                 </div>
@@ -234,7 +246,7 @@ function destroySubcategory(subcategory) {
                                     aria-label="Edita subcategoria"
                                     @click="startEditSubcategory(subcategory)"
                                 >
-                                    <Pencil :size="14" />
+                                    <IconPencil :size="14" />
                                 </button>
                                 <button
                                     type="button"
@@ -242,7 +254,7 @@ function destroySubcategory(subcategory) {
                                     aria-label="Elimina subcategoria"
                                     @click="destroySubcategory(subcategory)"
                                 >
-                                    <Trash2 :size="14" />
+                                    <IconTrash :size="14" />
                                 </button>
                             </div>
                         </div>
@@ -253,6 +265,7 @@ function destroySubcategory(subcategory) {
                 </ul>
             </div>
         </div>
+    </div>
     </div>
     </AppLayout>
 </template>

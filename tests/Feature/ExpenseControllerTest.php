@@ -2,6 +2,11 @@
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 function createSubcategory(string $categoryName = 'Menjar', string $subcategoryName = 'Supermercats')
 {

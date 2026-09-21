@@ -6,6 +6,7 @@ let currentUrl = '/despeses';
 
 vi.mock('@inertiajs/vue3', () => ({
     usePage: () => ({ url: currentUrl }),
+    router: { post: vi.fn() },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
 }));
 
@@ -18,6 +19,15 @@ describe('AppLayout', () => {
         expect(wrapper.text()).toContain('Contingut');
     });
 
+    test('logs out when the "Surt" button is clicked', async () => {
+        const { router } = await import('@inertiajs/vue3');
+        const wrapper = mount(AppLayout);
+
+        await wrapper.find('button').trigger('click');
+
+        expect(router.post).toHaveBeenCalledWith('/logout');
+    });
+
     test('highlights the link matching the current page', () => {
         currentUrl = '/categories';
         const wrapper = mount(AppLayout);
@@ -26,7 +36,7 @@ describe('AppLayout', () => {
         const categoriesLink = links.find((link) => link.text() === 'Categories');
         const expensesLink = links.find((link) => link.text() === 'Despeses');
 
-        expect(categoriesLink.classes()).toContain('fw-bold');
-        expect(expensesLink.classes()).not.toContain('fw-bold');
+        expect(categoriesLink.classes()).toContain('active');
+        expect(expensesLink.classes()).not.toContain('active');
     });
 });

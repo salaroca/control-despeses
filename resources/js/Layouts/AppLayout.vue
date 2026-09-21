@@ -1,38 +1,60 @@
 <script setup>
 import { computed } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
-import { PiggyBank, Tags, Wallet } from 'lucide-vue-next';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { IconLogout, IconPigMoney, IconTags, IconWallet } from '@tabler/icons-vue';
 
 const page = usePage();
 const currentPath = computed(() => page.url.split('?')[0]);
 
 const navItems = [
-    { href: '/despeses', label: 'Despeses', icon: Wallet },
-    { href: '/categories', label: 'Categories', icon: Tags },
-    { href: '/pressupostos', label: 'Pressupostos', icon: PiggyBank },
+    { href: '/despeses', label: 'Despeses', icon: IconWallet },
+    { href: '/categories', label: 'Categories', icon: IconTags },
+    { href: '/pressupostos', label: 'Pressupostos', icon: IconPigMoney },
 ];
+
+function logout() {
+    router.post('/logout');
+}
 </script>
 
 <template>
-    <nav class="navbar navbar-expand navbar-dark bg-primary mb-4">
-        <div class="container d-flex align-items-center" style="max-width: 900px;">
-            <span class="navbar-brand d-flex align-items-center gap-2 mb-0">
-                <Wallet :size="20" />
-                Control de despeses
-            </span>
-            <div class="navbar-nav flex-row gap-3 ms-auto">
-                <Link
-                    v-for="item in navItems"
-                    :key="item.href"
-                    :href="item.href"
-                    class="nav-link d-flex align-items-center gap-1"
-                    :class="currentPath === item.href ? 'fw-bold text-white' : 'text-white-50'"
-                >
-                    <component :is="item.icon" :size="16" />
-                    {{ item.label }}
+    <div class="page">
+        <header class="navbar navbar-expand-md navbar-dark d-print-none bg-primary">
+            <div class="container-xl">
+                <Link href="/despeses" class="navbar-brand d-flex align-items-center gap-2">
+                    <IconWallet :size="24" />
+                    Control de despeses
                 </Link>
+                <div class="navbar-nav flex-row ms-auto">
+                    <div v-for="item in navItems" :key="item.href" class="nav-item">
+                        <Link
+                            :href="item.href"
+                            class="nav-link d-flex align-items-center gap-1"
+                            :class="{ active: currentPath === item.href }"
+                        >
+                            <span class="nav-link-icon">
+                                <component :is="item.icon" :size="18" />
+                            </span>
+                            <span class="nav-link-title">{{ item.label }}</span>
+                        </Link>
+                    </div>
+                    <div class="nav-item">
+                        <button
+                            type="button"
+                            class="nav-link d-flex align-items-center gap-1 btn btn-link"
+                            @click="logout"
+                        >
+                            <span class="nav-link-icon">
+                                <IconLogout :size="18" />
+                            </span>
+                            <span class="nav-link-title">Surt</span>
+                        </button>
+                    </div>
+                </div>
             </div>
+        </header>
+        <div class="page-wrapper">
+            <slot />
         </div>
-    </nav>
-    <slot />
+    </div>
 </template>

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { Pencil, Trash2 } from 'lucide-vue-next';
+import { IconPencil, IconTrash } from '@tabler/icons-vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import ExpenseForm from './Partials/ExpenseForm.vue';
 
@@ -79,12 +79,22 @@ function formatDate(date) {
 
 <template>
     <AppLayout>
-    <div class="container py-4" style="max-width: 900px;">
-        <h1 class="h3 mb-4">Despeses</h1>
-
+    <div class="page-header d-print-none">
+        <div class="container-xl">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <h2 class="page-title">Despeses</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-body">
+    <div class="container-xl">
         <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Afegeix una despesa</h3>
+            </div>
             <div class="card-body">
-                <h2 class="h6 mb-3">Afegeix una despesa</h2>
                 <ExpenseForm
                     :form="createForm"
                     :categories-list="categoriesList"
@@ -127,7 +137,7 @@ function formatDate(date) {
                             aria-label="Edita"
                             @click="startEdit(expense)"
                         >
-                            <Pencil :size="16" />
+                            <IconPencil :size="16" />
                         </button>
                         <button
                             type="button"
@@ -135,7 +145,7 @@ function formatDate(date) {
                             aria-label="Elimina"
                             @click="destroyExpense(expense)"
                         >
-                            <Trash2 :size="16" />
+                            <IconTrash :size="16" />
                         </button>
                     </div>
                 </div>
@@ -161,6 +171,7 @@ function formatDate(date) {
                 Següent
             </Link>
         </div>
+    </div>
     </div>
     </AppLayout>
 </template>

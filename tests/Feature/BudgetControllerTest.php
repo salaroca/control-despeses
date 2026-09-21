@@ -2,6 +2,11 @@
 
 use App\Models\Budget;
 use App\Models\Category;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 function createBudgetSubcategory()
 {

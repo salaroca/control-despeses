@@ -1,6 +1,11 @@
 <?php
 
 use App\Models\Category;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 test('the categories index page renders with the shared categories list', function () {
     Category::create(['name' => 'Menjar']);

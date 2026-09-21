@@ -72,19 +72,27 @@ function formatAmount(amount) {
 
 <template>
     <AppLayout>
-    <div class="container py-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
-            <h1 class="h3 mb-0">Pressupost {{ year }}</h1>
-            <div class="d-flex align-items-center gap-2">
-                <Link :href="`/pressupostos?year=${year - 1}`" class="btn btn-outline-secondary btn-sm">
-                    &laquo; {{ year - 1 }}
-                </Link>
-                <Link :href="`/pressupostos?year=${year + 1}`" class="btn btn-outline-secondary btn-sm">
-                    {{ year + 1 }} &raquo;
-                </Link>
+    <div class="page-header d-print-none">
+        <div class="container-xl">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <h2 class="page-title">Pressupost {{ year }}</h2>
+                </div>
+                <div class="col-auto ms-auto d-print-none">
+                    <div class="d-flex align-items-center gap-2">
+                        <Link :href="`/pressupostos?year=${year - 1}`" class="btn btn-outline-secondary btn-sm">
+                            &laquo; {{ year - 1 }}
+                        </Link>
+                        <Link :href="`/pressupostos?year=${year + 1}`" class="btn btn-outline-secondary btn-sm">
+                            {{ year + 1 }} &raquo;
+                        </Link>
+                    </div>
+                </div>
             </div>
         </div>
-
+    </div>
+    <div class="page-body">
+    <div class="container-xl">
         <p class="text-muted small">
             Introdueix l'import previst per a cada subcategoria i mes. Els canvis es desen automàticament
             en sortir de la casella.
@@ -141,6 +149,7 @@ function formatAmount(amount) {
                 </tbody>
             </table>
         </div>
+    </div>
     </div>
     </AppLayout>
 </template>

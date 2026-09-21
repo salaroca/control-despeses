@@ -2,6 +2,11 @@
 
 use App\Models\Category;
 use App\Models\Subcategory;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->actingAs(User::factory()->create());
+});
 
 test('a subcategory can be created for a category', function () {
     $category = Category::create(['name' => 'Menjar']);
