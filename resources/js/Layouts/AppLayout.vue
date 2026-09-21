@@ -1,12 +1,13 @@
 <script setup>
 import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { IconLogout, IconPigMoney, IconTags, IconWallet } from '@tabler/icons-vue';
+import { IconLayoutDashboard, IconLogout, IconPigMoney, IconTags, IconWallet } from '@tabler/icons-vue';
 
 const page = usePage();
 const currentPath = computed(() => page.url.split('?')[0]);
 
 const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: IconLayoutDashboard },
     { href: '/despeses', label: 'Despeses', icon: IconWallet },
     { href: '/categories', label: 'Categories', icon: IconTags },
     { href: '/pressupostos', label: 'Pressupostos', icon: IconPigMoney },

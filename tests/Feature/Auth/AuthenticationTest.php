@@ -53,5 +53,6 @@ test('an authenticated user is redirected away from the login page', function ()
 
     $response = $this->actingAs($user)->get('/login');
 
-    $response->assertRedirect('/');
+    // Laravel's default guest-redirect looks for a GET route at the "dashboard" URI first.
+    $response->assertRedirect('/dashboard');
 });
