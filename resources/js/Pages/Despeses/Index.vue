@@ -11,11 +11,13 @@ defineProps({
 
 const page = usePage();
 const categoriesList = computed(() => page.props.categoriesList);
+const banksList = computed(() => page.props.banksList);
 
 function emptyExpenseData() {
     return {
         category_id: '',
         subcategory_id: '',
+        bank_id: '',
         amount: '',
         date: new Date().toISOString().slice(0, 10),
         note: '',
@@ -39,6 +41,7 @@ function startEdit(expense) {
     editForm.value = useForm({
         category_id: expense.subcategory.category_id,
         subcategory_id: expense.subcategory_id,
+        bank_id: expense.bank_id ?? '',
         amount: expense.amount,
         date: expense.date.slice(0, 10),
         note: expense.note ?? '',
@@ -98,6 +101,7 @@ function formatDate(date) {
                 <ExpenseForm
                     :form="createForm"
                     :categories-list="categoriesList"
+                    :banks-list="banksList"
                     submit-label="Afegeix"
                     @submit="submitCreate"
                 />
@@ -114,6 +118,7 @@ function formatDate(date) {
                     <ExpenseForm
                         :form="editForm"
                         :categories-list="categoriesList"
+                        :banks-list="banksList"
                         submit-label="Desa"
                         show-cancel
                         @submit="submitEdit(expense)"
@@ -126,7 +131,9 @@ function formatDate(date) {
                             {{ expense.subcategory.category.name }} · {{ expense.subcategory.name }}
                         </div>
                         <div class="text-muted small">
-                            {{ formatDate(expense.date) }}<span v-if="expense.note"> — {{ expense.note }}</span>
+                            {{ formatDate(expense.date) }}
+                            <span v-if="expense.bank"> · {{ expense.bank.name }}</span>
+                            <span v-if="expense.note"> — {{ expense.note }}</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-3">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Bank;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\User;
@@ -54,6 +55,48 @@ test('an expense can be created with valid data', function () {
     $response->assertRedirect();
     expect(Expense::count())->toBe(1);
     expect(Expense::first()->note)->toBe('Compra setmanal');
+});
+
+test('an expense can be created with a bank', function () {
+    $subcategory = createSubcategory();
+    $bank = Bank::create(['name' => 'Banc A']);
+
+    $response = $this->post('/despeses', [
+        'subcategory_id' => $subcategory->id,
+        'bank_id' => $bank->id,
+        'amount' => 10,
+        'date' => '2026-09-19',
+    ]);
+
+    $response->assertRedirect();
+    expect(Expense::first()->bank_id)->toBe($bank->id);
+});
+
+test('an expense can be created without a bank', function () {
+    $subcategory = createSubcategory();
+
+    $response = $this->post('/despeses', [
+        'subcategory_id' => $subcategory->id,
+        'amount' => 10,
+        'date' => '2026-09-19',
+    ]);
+
+    $response->assertRedirect();
+    expect(Expense::first()->bank_id)->toBeNull();
+});
+
+test('creating an expense with a non-existent bank fails validation', function () {
+    $subcategory = createSubcategory();
+
+    $response = $this->post('/despeses', [
+        'subcategory_id' => $subcategory->id,
+        'bank_id' => 999,
+        'amount' => 10,
+        'date' => '2026-09-19',
+    ]);
+
+    $response->assertSessionHasErrors('bank_id');
+    expect(Expense::count())->toBe(0);
 });
 
 test('an expense can be created without a note', function () {

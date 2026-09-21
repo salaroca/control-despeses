@@ -42,6 +42,7 @@ class DashboardController extends Controller
             'annualBudget' => $annualBudget,
             'byCategory' => $this->totalsByColumn($year, $month, 'categories.name'),
             'bySubcategory' => $this->totalsByColumn($year, $month, 'subcategories.name'),
+            'byBank' => $this->totalsByBank($year, $month),
         ]);
     }
 
@@ -57,6 +58,26 @@ class DashboardController extends Controller
             ->whereMonth('expenses.date', $month)
             ->selectRaw("{$groupColumn} as name, SUM(expenses.amount) as total")
             ->groupBy($groupColumn)
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => ['name' => $row->name, 'total' => (float) $row->total])
+            ->all();
+    }
+
+    /**
+     * The bank is optional on an expense, so expenses without one are grouped
+     * under "Sense banc" instead of being silently dropped from the breakdown.
+     *
+     * @return array<int, array{name: string, total: float}>
+     */
+    private function totalsByBank(int $year, int $month): array
+    {
+        return Expense::query()
+            ->leftJoin('banks', 'banks.id', '=', 'expenses.bank_id')
+            ->whereYear('expenses.date', $year)
+            ->whereMonth('expenses.date', $month)
+            ->selectRaw("COALESCE(banks.name, 'Sense banc') as name, SUM(expenses.amount) as total")
+            ->groupBy('name')
             ->orderByDesc('total')
             ->get()
             ->map(fn ($row) => ['name' => $row->name, 'total' => (float) $row->total])

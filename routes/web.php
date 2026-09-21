@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\BankController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -33,6 +34,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
     Route::put('/subcategories/{subcategory}', [SubcategoryController::class, 'update'])->name('subcategories.update');
     Route::delete('/subcategories/{subcategory}', [SubcategoryController::class, 'destroy'])->name('subcategories.destroy');
+
+    Route::get('/bancs', [BankController::class, 'index'])->name('banks.index');
+    Route::post('/bancs', [BankController::class, 'store'])->name('banks.store');
+    Route::put('/bancs/{bank}', [BankController::class, 'update'])->name('banks.update');
+    Route::delete('/bancs/{bank}', [BankController::class, 'destroy'])->name('banks.destroy');
 
     Route::get('/pressupostos', [BudgetController::class, 'index'])->name('budgets.index');
     Route::post('/pressupostos', [BudgetController::class, 'upsert'])->name('budgets.upsert');

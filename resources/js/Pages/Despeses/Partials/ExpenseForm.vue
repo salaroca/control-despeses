@@ -4,6 +4,7 @@ import { computed } from 'vue';
 const props = defineProps({
     form: { type: Object, required: true },
     categoriesList: { type: Array, required: true },
+    banksList: { type: Array, required: true },
     submitLabel: { type: String, default: 'Afegeix' },
     showCancel: { type: Boolean, default: false },
 });
@@ -23,7 +24,7 @@ function onCategoryChange() {
 
 <template>
     <form class="row g-2 align-items-start" @submit.prevent="emit('submit')">
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <label class="form-label">Categoria</label>
             <select
                 v-model="form.category_id"
@@ -37,7 +38,7 @@ function onCategoryChange() {
             </select>
         </div>
 
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
             <label class="form-label">Subcategoria</label>
             <select
                 v-model="form.subcategory_id"
@@ -52,6 +53,17 @@ function onCategoryChange() {
             <div v-if="form.errors.subcategory_id" class="text-danger small mt-1">
                 {{ form.errors.subcategory_id }}
             </div>
+        </div>
+
+        <div class="col-12 col-md-2">
+            <label class="form-label">Banc</label>
+            <select v-model="form.bank_id" class="form-select form-select-lg">
+                <option value="">Cap</option>
+                <option v-for="bank in banksList" :key="bank.id" :value="bank.id">
+                    {{ bank.name }}
+                </option>
+            </select>
+            <div v-if="form.errors.bank_id" class="text-danger small mt-1">{{ form.errors.bank_id }}</div>
         </div>
 
         <div class="col-6 col-md-2">

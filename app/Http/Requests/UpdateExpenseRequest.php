@@ -18,6 +18,7 @@ class UpdateExpenseRequest extends FormRequest
     {
         return [
             'subcategory_id' => ['required', 'integer', 'exists:subcategories,id'],
+            'bank_id' => ['nullable', 'integer', 'exists:banks,id'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'date' => ['required', 'date'],
             'note' => ['nullable', 'string', 'max:255'],

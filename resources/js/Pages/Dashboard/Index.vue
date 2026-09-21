@@ -15,6 +15,7 @@ const props = defineProps({
     annualBudget: { type: Number, required: true },
     byCategory: { type: Array, required: true },
     bySubcategory: { type: Array, required: true },
+    byBank: { type: Array, required: true },
 });
 
 const selectedMonth = ref(`${String(props.year).padStart(4, '0')}-${String(props.month).padStart(2, '0')}`);
@@ -105,7 +106,7 @@ const monthLabel = computed(() => monthNames[props.month - 1]);
         </div>
 
         <div class="row row-cards">
-            <div class="col-12 col-lg-6">
+            <div class="col-12 col-lg-4">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Despesa per categoria ({{ monthLabel }})</h3>
@@ -115,13 +116,23 @@ const monthLabel = computed(() => monthNames[props.month - 1]);
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-lg-6">
+            <div class="col-12 col-lg-4">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Despesa per subcategoria ({{ monthLabel }})</h3>
                     </div>
                     <div class="card-body">
                         <ExpenseBreakdownChart :items="bySubcategory" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Despesa per banc ({{ monthLabel }})</h3>
+                    </div>
+                    <div class="card-body">
+                        <ExpenseBreakdownChart :items="byBank" />
                     </div>
                 </div>
             </div>

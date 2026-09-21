@@ -22,6 +22,7 @@ function baseProps(overrides = {}) {
         annualBudget: 80,
         byCategory: [{ name: 'Menjar', total: 50 }],
         bySubcategory: [{ name: 'Supermercats', total: 50 }],
+        byBank: [{ name: 'Banc A', total: 50 }],
         ...overrides,
     };
 }

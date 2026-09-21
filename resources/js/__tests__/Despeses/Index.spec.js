@@ -11,6 +11,8 @@ const categoriesList = [
     },
 ];
 
+const banksList = [{ id: 100, name: 'Banc A' }];
+
 function makeForm(initial) {
     const form = reactive({
         ...initial,
@@ -25,7 +27,7 @@ function makeForm(initial) {
 }
 
 vi.mock('@inertiajs/vue3', () => ({
-    usePage: () => ({ props: { categoriesList }, url: '/despeses' }),
+    usePage: () => ({ props: { categoriesList, banksList }, url: '/despeses' }),
     useForm: (initial) => makeForm(initial),
     router: { delete: vi.fn() },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
@@ -68,6 +70,20 @@ describe('Despeses/Index', () => {
         expect(wrapper.text()).toContain('Menjar · Supermercats');
         expect(wrapper.text()).toContain('Fruita i verdura');
         expect(wrapper.text()).toContain('12,50');
+    });
+
+    test('shows the bank name when the expense has one', () => {
+        const wrapper = mount(Index, {
+            props: {
+                expenses: {
+                    data: [buildExpense({ bank_id: 100, bank: { id: 100, name: 'Banc A' } })],
+                    prev_page_url: null,
+                    next_page_url: null,
+                },
+            },
+        });
+
+        expect(wrapper.text()).toContain('Banc A');
     });
 
     test('clicking the edit button switches the row into edit mode', async () => {

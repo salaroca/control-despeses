@@ -23,9 +23,23 @@ describe('AppLayout', () => {
         const { router } = await import('@inertiajs/vue3');
         const wrapper = mount(AppLayout);
 
-        await wrapper.find('button').trigger('click');
+        const logoutButton = wrapper.findAll('button').find((button) => button.text().includes('Surt'));
+        await logoutButton.trigger('click');
 
         expect(router.post).toHaveBeenCalledWith('/logout');
+    });
+
+    test('toggles the dark theme on the page and remembers the choice', async () => {
+        document.documentElement.removeAttribute('data-bs-theme');
+        localStorage.clear();
+        const wrapper = mount(AppLayout);
+
+        const themeButton = wrapper.find('button[aria-label="Activa el mode fosc"]');
+        await themeButton.trigger('click');
+
+        expect(document.documentElement.getAttribute('data-bs-theme')).toBe('dark');
+        expect(localStorage.getItem('theme')).toBe('dark');
+        expect(wrapper.find('button[aria-label="Activa el mode clar"]').exists()).toBe(true);
     });
 
     test('highlights the link matching the current page', () => {

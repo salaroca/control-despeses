@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Bank;
 use App\Models\Category;
 use App\Models\User;
 
@@ -14,9 +15,11 @@ test('the dashboard renders with the totals for the requested month and year', f
     $transport = Category::create(['name' => 'Transport']);
     $gasolina = $transport->subcategories()->create(['name' => 'Gasolina']);
 
-    $supermercats->expenses()->create(['amount' => 40, 'date' => '2026-03-05']);
+    $bank = Bank::create(['name' => 'Banc A']);
+
+    $supermercats->expenses()->create(['amount' => 40, 'date' => '2026-03-05', 'bank_id' => $bank->id]);
     $supermercats->expenses()->create(['amount' => 10, 'date' => '2026-03-20']);
-    $gasolina->expenses()->create(['amount' => 25, 'date' => '2026-03-12']);
+    $gasolina->expenses()->create(['amount' => 25, 'date' => '2026-03-12', 'bank_id' => $bank->id]);
     // An expense in a different month must not be counted for the monthly totals.
     $gasolina->expenses()->create(['amount' => 999, 'date' => '2026-04-01']);
 
@@ -41,6 +44,10 @@ test('the dashboard renders with the totals for the requested month and year', f
             ['name' => 'Supermercats', 'total' => 50],
             ['name' => 'Gasolina', 'total' => 25],
         ])
+        ->where('byBank', [
+            ['name' => 'Banc A', 'total' => 65],
+            ['name' => 'Sense banc', 'total' => 10],
+        ])
     );
 });
 
@@ -61,5 +68,6 @@ test('a month with no expenses shows empty totals and breakdowns', function () {
         ->where('monthlyBudget', 0)
         ->where('byCategory', [])
         ->where('bySubcategory', [])
+        ->where('byBank', [])
     );
 });

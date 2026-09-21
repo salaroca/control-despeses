@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['subcategory_id', 'amount', 'date', 'note'])]
+#[Fillable(['subcategory_id', 'bank_id', 'amount', 'date', 'note'])]
 class Expense extends Model
 {
     /**
@@ -28,5 +28,13 @@ class Expense extends Model
     public function subcategory(): BelongsTo
     {
         return $this->belongsTo(Subcategory::class);
+    }
+
+    /**
+     * @return BelongsTo<Bank, $this>
+     */
+    public function bank(): BelongsTo
+    {
+        return $this->belongsTo(Bank::class);
     }
 }

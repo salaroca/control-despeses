@@ -14,7 +14,7 @@ class ExpenseController extends Controller
     public function index(): Response
     {
         $expenses = Expense::query()
-            ->with('subcategory.category')
+            ->with(['subcategory.category', 'bank'])
             ->orderByDesc('date')
             ->orderByDesc('id')
             ->paginate(15)

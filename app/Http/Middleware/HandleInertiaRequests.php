@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Bank;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -42,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                 ->orderBy('name')
                 ->with(['subcategories' => fn ($query) => $query->orderBy('name')])
                 ->get(),
+            'banksList' => Bank::query()->orderBy('name')->get(),
         ];
     }
 }
