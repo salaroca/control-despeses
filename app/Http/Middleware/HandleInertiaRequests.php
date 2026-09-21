@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -37,7 +38,10 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            'categoriesList' => Category::query()
+                ->orderBy('name')
+                ->with(['subcategories' => fn ($query) => $query->orderBy('name')])
+                ->get(),
         ];
     }
 }
