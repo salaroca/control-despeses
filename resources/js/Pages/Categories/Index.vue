@@ -6,7 +6,12 @@ import AppLayout from '../../Layouts/AppLayout.vue';
 
 const page = usePage();
 const categoriesList = computed(() => page.props.categoriesList);
+const banksList = computed(() => page.props.banksList);
 const deleteError = computed(() => page.props.errors?.delete);
+
+function bankName(bankId) {
+    return banksList.value.find((bank) => bank.id === bankId)?.name;
+}
 
 const createCategoryForm = useForm({ name: '' });
 
@@ -17,7 +22,7 @@ function submitCreateCategory() {
     });
 }
 
-const createSubcategoryForm = useForm({ category_id: '', name: '' });
+const createSubcategoryForm = useForm({ category_id: '', bank_id: '', name: '' });
 
 function submitCreateSubcategory() {
     createSubcategoryForm.post('/subcategories', {
@@ -61,6 +66,7 @@ function startEditSubcategory(subcategory) {
     editingSubcategoryId.value = subcategory.id;
     editingSubcategoryForm.value = useForm({
         category_id: subcategory.category_id,
+        bank_id: subcategory.bank_id ?? '',
         name: subcategory.name,
     });
 }
@@ -144,7 +150,7 @@ function destroySubcategory(subcategory) {
                             {{ createSubcategoryForm.errors.category_id }}
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-3">
                         <input
                             v-model="createSubcategoryForm.name"
                             type="text"
@@ -153,6 +159,17 @@ function destroySubcategory(subcategory) {
                         >
                         <div v-if="createSubcategoryForm.errors.name" class="text-danger small mt-1">
                             {{ createSubcategoryForm.errors.name }}
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <select v-model="createSubcategoryForm.bank_id" class="form-select form-select-lg">
+                            <option value="">Cap banc</option>
+                            <option v-for="bank in banksList" :key="bank.id" :value="bank.id">
+                                {{ bank.name }}
+                            </option>
+                        </select>
+                        <div v-if="createSubcategoryForm.errors.bank_id" class="text-danger small mt-1">
+                            {{ createSubcategoryForm.errors.bank_id }}
                         </div>
                     </div>
                     <div class="col-12 col-md-auto">
@@ -174,38 +191,45 @@ function destroySubcategory(subcategory) {
 
         <div v-else class="list-group">
             <div v-for="category in categoriesList" :key="category.id" class="list-group-item">
-                <div v-if="editingCategoryId === category.id" class="d-flex gap-2 align-items-start py-1">
-                    <input v-model="editingCategoryForm.name" type="text" class="form-control form-control-lg">
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        :disabled="editingCategoryForm.processing"
-                        @click="submitEditCategory(category)"
+                <div v-if="editingCategoryId === category.id" class="d-flex flex-wrap gap-2 align-items-start py-1">
+                    <input
+                        v-model="editingCategoryForm.name"
+                        type="text"
+                        class="form-control form-control-lg"
+                        style="flex: 1 1 200px;"
                     >
-                        Desa
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary" @click="cancelEditCategory">
-                        Cancel·la
-                    </button>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            :disabled="editingCategoryForm.processing"
+                            @click="submitEditCategory(category)"
+                        >
+                            Desa
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" @click="cancelEditCategory">
+                            Cancel·la
+                        </button>
+                    </div>
                 </div>
                 <div v-else class="d-flex justify-content-between align-items-center">
                     <span class="fw-semibold">{{ category.name }}</span>
                     <div class="d-flex gap-2">
                         <button
                             type="button"
-                            class="btn btn-sm btn-outline-secondary"
+                            class="btn btn-outline-secondary"
                             aria-label="Edita categoria"
                             @click="startEditCategory(category)"
                         >
-                            <IconPencil :size="16" />
+                            <IconPencil :size="20" />
                         </button>
                         <button
                             type="button"
-                            class="btn btn-sm btn-outline-danger"
+                            class="btn btn-outline-danger"
                             aria-label="Elimina categoria"
                             @click="destroyCategory(category)"
                         >
-                            <IconTrash :size="16" />
+                            <IconTrash :size="20" />
                         </button>
                     </div>
                 </div>
@@ -218,43 +242,65 @@ function destroySubcategory(subcategory) {
                     >
                         <div
                             v-if="editingSubcategoryId === subcategory.id"
-                            class="d-flex gap-2 align-items-start py-1"
+                            class="d-flex flex-wrap gap-2 align-items-start py-1"
                         >
-                            <input v-model="editingSubcategoryForm.name" type="text" class="form-control">
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-primary"
-                                :disabled="editingSubcategoryForm.processing"
-                                @click="submitEditSubcategory(subcategory)"
+                            <input
+                                v-model="editingSubcategoryForm.name"
+                                type="text"
+                                class="form-control"
+                                style="flex: 1 1 160px;"
                             >
-                                Desa
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-secondary"
-                                @click="cancelEditSubcategory"
+                            <select
+                                v-model="editingSubcategoryForm.bank_id"
+                                class="form-select"
+                                style="flex: 1 1 140px;"
                             >
-                                Cancel·la
-                            </button>
-                        </div>
-                        <div v-else class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted">{{ subcategory.name }}</span>
-                            <div class="d-flex gap-2">
+                                <option value="">Cap banc</option>
+                                <option v-for="bank in banksList" :key="bank.id" :value="bank.id">
+                                    {{ bank.name }}
+                                </option>
+                            </select>
+                            <div class="d-flex gap-2 flex-shrink-0">
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-outline-secondary"
-                                    aria-label="Edita subcategoria"
-                                    @click="startEditSubcategory(subcategory)"
+                                    class="btn btn-primary"
+                                    :disabled="editingSubcategoryForm.processing"
+                                    @click="submitEditSubcategory(subcategory)"
                                 >
-                                    <IconPencil :size="14" />
+                                    Desa
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-outline-danger"
+                                    class="btn btn-outline-secondary"
+                                    @click="cancelEditSubcategory"
+                                >
+                                    Cancel·la
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="text-muted d-flex align-items-center gap-2">
+                                {{ subcategory.name }}
+                                <span v-if="bankName(subcategory.bank_id)" class="badge bg-blue-lt">
+                                    {{ bankName(subcategory.bank_id) }}
+                                </span>
+                            </span>
+                            <div class="d-flex gap-2">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    aria-label="Edita subcategoria"
+                                    @click="startEditSubcategory(subcategory)"
+                                >
+                                    <IconPencil :size="18" />
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-danger"
                                     aria-label="Elimina subcategoria"
                                     @click="destroySubcategory(subcategory)"
                                 >
-                                    <IconTrash :size="14" />
+                                    <IconTrash :size="18" />
                                 </button>
                             </div>
                         </div>

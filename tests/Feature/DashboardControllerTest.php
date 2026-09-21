@@ -48,8 +48,31 @@ test('the dashboard renders with the totals for the requested month and year', f
             ['name' => 'Banc A', 'total' => 65],
             ['name' => 'Sense banc', 'total' => 10],
         ])
+        ->has('deviationTrend', 12)
+        ->where('deviationTrend.11', ['year' => 2026, 'month' => 3, 'deviation' => 5])
     );
 });
+
+test('the deviation trend covers the 12 months up to and including the selected one, across a year boundary', function () {
+    $subcategory = createBudgetSubcategoryForDeviation();
+    $subcategory->expenses()->create(['amount' => 30, 'date' => '2026-02-10']);
+    $subcategory->budgets()->create(['year' => 2026, 'month' => 2, 'amount' => 50]);
+
+    $response = $this->get('/dashboard?year=2026&month=2');
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('deviationTrend', 12)
+        ->where('deviationTrend.0', ['year' => 2025, 'month' => 3, 'deviation' => 0])
+        ->where('deviationTrend.11', ['year' => 2026, 'month' => 2, 'deviation' => 20])
+    );
+});
+
+function createBudgetSubcategoryForDeviation()
+{
+    $category = Category::create(['name' => 'Oci']);
+
+    return $category->subcategories()->create(['name' => 'Cinema']);
+}
 
 test('the dashboard defaults to the current month and year', function () {
     $response = $this->get('/dashboard');

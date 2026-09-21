@@ -16,4 +16,12 @@ class Bank extends Model
     {
         return $this->hasMany(Expense::class);
     }
+
+    /**
+     * @return HasMany<Subcategory, $this>
+     */
+    public function subcategories(): HasMany
+    {
+        return $this->hasMany(Subcategory::class);
+    }
 }

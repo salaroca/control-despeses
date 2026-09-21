@@ -19,6 +19,7 @@ class StoreSubcategoryRequest extends FormRequest
     {
         return [
             'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'bank_id' => ['nullable', 'integer', 'exists:banks,id'],
             'name' => [
                 'required',
                 'string',

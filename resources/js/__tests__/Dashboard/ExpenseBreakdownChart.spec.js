@@ -34,4 +34,25 @@ describe('ExpenseBreakdownChart', () => {
         const chart = wrapper.findComponent(Bar);
         expect(chart.props('options').plugins.legend.display).toBe(false);
     });
+
+    test('is horizontal (indexAxis "y") by default', async () => {
+        const { Bar } = await import('vue-chartjs');
+        const wrapper = mount(ExpenseBreakdownChart, { props: { items: [{ name: 'Menjar', total: 50 }] } });
+
+        const chart = wrapper.findComponent(Bar);
+        expect(chart.props('options').indexAxis).toBe('y');
+    });
+
+    test('switches to vertical bars (indexAxis "x") with a scrollable, fixed-height container', async () => {
+        const { Bar } = await import('vue-chartjs');
+        const items = Array.from({ length: 20 }, (_, i) => ({ name: `Sub ${i}`, total: 10 }));
+        const wrapper = mount(ExpenseBreakdownChart, { props: { items, horizontal: false } });
+
+        const chart = wrapper.findComponent(Bar);
+        expect(chart.props('options').indexAxis).toBe('x');
+
+        const scrollContainer = wrapper.find('.overflow-x-auto');
+        expect(scrollContainer.exists()).toBe(true);
+        expect(scrollContainer.attributes('style')).toContain('height: 260px');
+    });
 });

@@ -5,6 +5,7 @@ import Index from '../../Pages/Categories/Index.vue';
 
 let categoriesList;
 let errors;
+let banksList;
 
 function makeForm(initial) {
     const form = reactive({
@@ -20,7 +21,7 @@ function makeForm(initial) {
 }
 
 vi.mock('@inertiajs/vue3', () => ({
-    usePage: () => ({ props: { categoriesList, errors }, url: '/categories' }),
+    usePage: () => ({ props: { categoriesList, errors, banksList }, url: '/categories' }),
     useForm: (initial) => makeForm(initial),
     router: { delete: vi.fn() },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
@@ -31,7 +32,7 @@ beforeEach(() => {
         {
             id: 1,
             name: 'Menjar',
-            subcategories: [{ id: 10, name: 'Supermercats', category_id: 1 }],
+            subcategories: [{ id: 10, name: 'Supermercats', category_id: 1, bank_id: 100 }],
         },
         {
             id: 2,
@@ -39,6 +40,7 @@ beforeEach(() => {
             subcategories: [],
         },
     ];
+    banksList = [{ id: 100, name: 'Banc A' }];
     errors = {};
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
@@ -61,6 +63,12 @@ describe('Categories/Index', () => {
         expect(wrapper.text()).toContain('Menjar');
         expect(wrapper.text()).toContain('Supermercats');
         expect(wrapper.text()).toContain('Sense subcategories');
+    });
+
+    test('shows the bank assigned to a subcategory', () => {
+        const wrapper = mount(Index);
+
+        expect(wrapper.text()).toContain('Banc A');
     });
 
     test('clicking the edit button switches the category into edit mode', async () => {
@@ -88,6 +96,16 @@ describe('Categories/Index', () => {
         await wrapper.find('button[aria-label="Elimina subcategoria"]').trigger('click');
 
         expect(router.delete).toHaveBeenCalledWith('/subcategories/10', { preserveScroll: true });
+    });
+
+    test('lets you pick a bank when adding a subcategory', () => {
+        const wrapper = mount(Index);
+
+        const bankSelect = wrapper.findAll('select').find((select) =>
+            select.findAll('option').some((option) => option.text() === 'Banc A'),
+        );
+
+        expect(bankSelect.findAll('option').map((option) => option.text())).toContain('Cap banc');
     });
 
     test('shows the delete error message when present', () => {

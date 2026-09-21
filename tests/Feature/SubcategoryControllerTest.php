@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Bank;
 use App\Models\Category;
 use App\Models\Subcategory;
 use App\Models\User;
@@ -58,6 +59,35 @@ test('a subcategory can be updated', function () {
 
     $response->assertRedirect();
     expect($subcategory->refresh()->name)->toBe('Supermercats');
+});
+
+test('a subcategory can be created with a bank', function () {
+    $category = Category::create(['name' => 'Menjar']);
+    $bank = Bank::create(['name' => 'Banc A']);
+
+    $response = $this->post('/subcategories', [
+        'category_id' => $category->id,
+        'bank_id' => $bank->id,
+        'name' => 'Supermercats',
+    ]);
+
+    $response->assertRedirect();
+    expect(Subcategory::first()->bank_id)->toBe($bank->id);
+});
+
+test('a subcategory bank can be updated', function () {
+    $category = Category::create(['name' => 'Menjar']);
+    $subcategory = $category->subcategories()->create(['name' => 'Supermercats']);
+    $bank = Bank::create(['name' => 'Banc A']);
+
+    $response = $this->put("/subcategories/{$subcategory->id}", [
+        'category_id' => $category->id,
+        'bank_id' => $bank->id,
+        'name' => 'Supermercats',
+    ]);
+
+    $response->assertRedirect();
+    expect($subcategory->refresh()->bank_id)->toBe($bank->id);
 });
 
 test('a subcategory without expenses can be deleted', function () {

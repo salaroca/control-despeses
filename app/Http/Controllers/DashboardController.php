@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Budget;
 use App\Models\Expense;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,6 +44,7 @@ class DashboardController extends Controller
             'byCategory' => $this->totalsByColumn($year, $month, 'categories.name'),
             'bySubcategory' => $this->totalsByColumn($year, $month, 'subcategories.name'),
             'byBank' => $this->totalsByBank($year, $month),
+            'deviationTrend' => $this->deviationTrend($year, $month),
         ]);
     }
 
@@ -81,6 +83,39 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->get()
             ->map(fn ($row) => ['name' => $row->name, 'total' => (float) $row->total])
+            ->all();
+    }
+
+    /**
+     * The last 12 months up to and including the selected month, so the frontend
+     * can switch between a 3/6/12-month window without another request.
+     *
+     * @return array<int, array{year: int, month: int, deviation: float}>
+     */
+    private function deviationTrend(int $year, int $month): array
+    {
+        $selected = Carbon::create($year, $month, 1);
+
+        return collect(range(11, 0))
+            ->map(function (int $monthsAgo) use ($selected) {
+                $date = $selected->copy()->subMonths($monthsAgo);
+
+                $spent = (float) Expense::query()
+                    ->whereYear('date', $date->year)
+                    ->whereMonth('date', $date->month)
+                    ->sum('amount');
+
+                $budgeted = (float) Budget::query()
+                    ->where('year', $date->year)
+                    ->where('month', $date->month)
+                    ->sum('amount');
+
+                return [
+                    'year' => $date->year,
+                    'month' => $date->month,
+                    'deviation' => $budgeted - $spent,
+                ];
+            })
             ->all();
     }
 }

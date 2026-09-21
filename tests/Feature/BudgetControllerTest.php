@@ -20,6 +20,8 @@ test('the budgets index page renders the budgets for the requested year', functi
     $subcategory->budgets()->create(['year' => 2026, 'month' => 3, 'amount' => 60]);
     $subcategory->budgets()->create(['year' => 2027, 'month' => 3, 'amount' => 65]);
 
+    $subcategory->expenses()->create(['amount' => 45, 'date' => '2026-03-10']);
+
     $response = $this->get('/pressupostos?year=2026');
 
     $response->assertInertia(fn ($page) => $page
@@ -27,6 +29,12 @@ test('the budgets index page renders the budgets for the requested year', functi
         ->where('year', 2026)
         ->has('budgets', 1)
         ->where('budgets.0.amount', '60.00')
+        ->has('actuals', 1)
+        ->where('actuals.0', [
+            'subcategory_id' => $subcategory->id,
+            'month' => 3,
+            'total' => 45,
+        ])
     );
 });
 

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
+import DeviationTrendChart from './Partials/DeviationTrendChart.vue';
 import ExpenseBreakdownChart from './Partials/ExpenseBreakdownChart.vue';
 import StatCard from './Partials/StatCard.vue';
 
@@ -16,6 +17,7 @@ const props = defineProps({
     byCategory: { type: Array, required: true },
     bySubcategory: { type: Array, required: true },
     byBank: { type: Array, required: true },
+    deviationTrend: { type: Array, required: true },
 });
 
 const selectedMonth = ref(`${String(props.year).padStart(4, '0')}-${String(props.month).padStart(2, '0')}`);
@@ -51,6 +53,17 @@ const monthNames = [
     'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre',
 ];
 const monthLabel = computed(() => monthNames[props.month - 1]);
+
+const monthAbbreviations = ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
+
+const trendWindow = ref(3);
+
+const trendItems = computed(() => props.deviationTrend
+    .slice(-trendWindow.value)
+    .map((item) => ({
+        label: `${monthAbbreviations[item.month - 1]} ${String(item.year).slice(2)}`,
+        deviation: item.deviation,
+    })));
 </script>
 
 <template>
@@ -105,8 +118,40 @@ const monthLabel = computed(() => monthNames[props.month - 1]);
             </div>
         </div>
 
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Desviació pressupost vs. despesa real</h3>
+                <div class="card-actions">
+                    <div class="btn-group">
+                        <button
+                            v-for="window in [3, 6, 12]"
+                            :key="window"
+                            type="button"
+                            class="btn btn-sm"
+                            :class="trendWindow === window ? 'btn-primary' : 'btn-outline-primary'"
+                            @click="trendWindow = window"
+                        >
+                            {{ window }}m
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <DeviationTrendChart :items="trendItems" />
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Despesa per subcategoria ({{ monthLabel }})</h3>
+            </div>
+            <div class="card-body">
+                <ExpenseBreakdownChart :items="bySubcategory" :horizontal="false" />
+            </div>
+        </div>
+
         <div class="row row-cards">
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-lg-6">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Despesa per categoria ({{ monthLabel }})</h3>
@@ -116,17 +161,7 @@ const monthLabel = computed(() => monthNames[props.month - 1]);
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-lg-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Despesa per subcategoria ({{ monthLabel }})</h3>
-                    </div>
-                    <div class="card-body">
-                        <ExpenseBreakdownChart :items="bySubcategory" />
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-lg-6">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Despesa per banc ({{ monthLabel }})</h3>

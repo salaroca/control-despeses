@@ -12,6 +12,14 @@ vi.mock('vue-chartjs', () => ({
     Bar: { props: ['data', 'options'], template: '<div class="bar-stub" />' },
 }));
 
+function buildDeviationTrend() {
+    // 12 months ending at 2026-03, deviation = index (0..11) for easy assertions.
+    const months = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
+    const years = [2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025, 2025, 2026, 2026, 2026];
+
+    return months.map((month, index) => ({ year: years[index], month, deviation: index }));
+}
+
 function baseProps(overrides = {}) {
     return {
         year: 2026,
@@ -23,6 +31,7 @@ function baseProps(overrides = {}) {
         byCategory: [{ name: 'Menjar', total: 50 }],
         bySubcategory: [{ name: 'Supermercats', total: 50 }],
         byBank: [{ name: 'Banc A', total: 50 }],
+        deviationTrend: buildDeviationTrend(),
         ...overrides,
     };
 }
@@ -55,5 +64,23 @@ describe('Dashboard/Index', () => {
         await wrapper.find('input[type="month"]').trigger('change');
 
         expect(router.get).toHaveBeenCalledWith('/dashboard', { year: 2026, month: 5 });
+    });
+
+    test('shows the last 3 months of deviation by default', async () => {
+        const { Bar } = await import('vue-chartjs');
+        const wrapper = mount(Index, { props: baseProps() });
+
+        const trendChart = wrapper.findAllComponents(Bar).at(0);
+        expect(trendChart.props('data').datasets[0].data).toEqual([9, 10, 11]);
+    });
+
+    test('switches to the last 12 months when the "12m" button is clicked', async () => {
+        const { Bar } = await import('vue-chartjs');
+        const wrapper = mount(Index, { props: baseProps() });
+
+        await wrapper.findAll('button').find((button) => button.text() === '12m').trigger('click');
+
+        const trendChart = wrapper.findAllComponents(Bar).at(0);
+        expect(trendChart.props('data').datasets[0].data).toHaveLength(12);
     });
 });
