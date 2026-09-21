@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SubcategoryController;
@@ -20,3 +21,6 @@ Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])-
 Route::post('/subcategories', [SubcategoryController::class, 'store'])->name('subcategories.store');
 Route::put('/subcategories/{subcategory}', [SubcategoryController::class, 'update'])->name('subcategories.update');
 Route::delete('/subcategories/{subcategory}', [SubcategoryController::class, 'destroy'])->name('subcategories.destroy');
+
+Route::get('/pressupostos', [BudgetController::class, 'index'])->name('budgets.index');
+Route::post('/pressupostos', [BudgetController::class, 'upsert'])->name('budgets.upsert');

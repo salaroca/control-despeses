@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Tags, Wallet } from 'lucide-vue-next';
+import { PiggyBank, Tags, Wallet } from 'lucide-vue-next';
 
 const page = usePage();
 const currentPath = computed(() => page.url.split('?')[0]);
@@ -9,6 +9,7 @@ const currentPath = computed(() => page.url.split('?')[0]);
 const navItems = [
     { href: '/despeses', label: 'Despeses', icon: Wallet },
     { href: '/categories', label: 'Categories', icon: Tags },
+    { href: '/pressupostos', label: 'Pressupostos', icon: PiggyBank },
 ];
 </script>
 
