@@ -36,6 +36,49 @@ test('the expenses index page renders with the expenses list and shared categori
     );
 });
 
+test('the expenses index can be filtered by a search term matching the note', function () {
+    $subcategory = createSubcategory();
+
+    $subcategory->expenses()->create(['amount' => 12.50, 'date' => '2026-09-19', 'note' => 'Fruita i verdura']);
+    $subcategory->expenses()->create(['amount' => 30, 'date' => '2026-09-19', 'note' => 'Benzina']);
+
+    $response = $this->get('/despeses?search=fruita');
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('expenses.data', 1)
+        ->where('expenses.data.0.note', 'Fruita i verdura')
+        ->where('filters.search', 'fruita')
+    );
+});
+
+test('the expenses index can be filtered by subcategory', function () {
+    $subcategory = createSubcategory();
+    $otherSubcategory = createSubcategory('Transport', 'Gasolina');
+
+    $subcategory->expenses()->create(['amount' => 12.50, 'date' => '2026-09-19']);
+    $otherSubcategory->expenses()->create(['amount' => 30, 'date' => '2026-09-19']);
+
+    $response = $this->get("/despeses?subcategory_id={$otherSubcategory->id}");
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('expenses.data', 1)
+        ->where('expenses.data.0.subcategory_id', $otherSubcategory->id)
+        ->where('filters.subcategory_id', $otherSubcategory->id)
+    );
+});
+
+test('the expenses index without filters returns them all and null filters', function () {
+    $subcategory = createSubcategory();
+    $subcategory->expenses()->create(['amount' => 12.50, 'date' => '2026-09-19']);
+
+    $response = $this->get('/despeses');
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('filters.search', null)
+        ->where('filters.subcategory_id', null)
+    );
+});
+
 test('the root url redirects to the expenses page', function () {
     $response = $this->get('/');
 

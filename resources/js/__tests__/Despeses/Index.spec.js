@@ -29,9 +29,11 @@ function makeForm(initial) {
 vi.mock('@inertiajs/vue3', () => ({
     usePage: () => ({ props: { categoriesList, banksList }, url: '/despeses' }),
     useForm: (initial) => makeForm(initial),
-    router: { delete: vi.fn() },
+    router: { delete: vi.fn(), get: vi.fn() },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
 }));
+
+const emptyFilters = { search: null, subcategory_id: null };
 
 function buildExpense(overrides = {}) {
     return {
@@ -56,7 +58,7 @@ describe('Despeses/Index', () => {
 
     test('shows the empty state when there are no expenses', () => {
         const wrapper = mount(Index, {
-            props: { expenses: { data: [], prev_page_url: null, next_page_url: null } },
+            props: { expenses: { data: [], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
         });
 
         expect(wrapper.text()).toContain('Encara no hi ha despeses registrades.');
@@ -64,7 +66,7 @@ describe('Despeses/Index', () => {
 
     test('lists the expenses with their category and amount', () => {
         const wrapper = mount(Index, {
-            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null } },
+            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
         });
 
         expect(wrapper.text()).toContain('Menjar · Supermercats');
@@ -80,6 +82,7 @@ describe('Despeses/Index', () => {
                     prev_page_url: null,
                     next_page_url: null,
                 },
+                filters: emptyFilters,
             },
         });
 
@@ -88,7 +91,7 @@ describe('Despeses/Index', () => {
 
     test('clicking the edit button switches the row into edit mode', async () => {
         const wrapper = mount(Index, {
-            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null } },
+            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
         });
 
         await wrapper.find('button[aria-label="Edita"]').trigger('click');
@@ -100,7 +103,7 @@ describe('Despeses/Index', () => {
     test('deleting an expense asks for confirmation before calling the server', async () => {
         const { router } = await import('@inertiajs/vue3');
         const wrapper = mount(Index, {
-            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null } },
+            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
         });
 
         await wrapper.find('button[aria-label="Elimina"]').trigger('click');
@@ -113,7 +116,7 @@ describe('Despeses/Index', () => {
         window.confirm.mockReturnValue(false);
         const { router } = await import('@inertiajs/vue3');
         const wrapper = mount(Index, {
-            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null } },
+            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
         });
 
         await wrapper.find('button[aria-label="Elimina"]').trigger('click');
@@ -125,10 +128,76 @@ describe('Despeses/Index', () => {
         const wrapper = mount(Index, {
             props: {
                 expenses: { data: [buildExpense()], prev_page_url: '/despeses?page=1', next_page_url: '/despeses?page=3' },
+                filters: emptyFilters,
             },
         });
 
         expect(wrapper.text()).toContain('Anterior');
         expect(wrapper.text()).toContain('Següent');
+    });
+
+    test('typing in the search box requests filtered expenses after a debounce', async () => {
+        vi.useFakeTimers();
+        const { router } = await import('@inertiajs/vue3');
+        const wrapper = mount(Index, {
+            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
+        });
+
+        await wrapper.find('input[placeholder="Cerca per text a la nota..."]').setValue('fruita');
+        vi.advanceTimersByTime(300);
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/despeses',
+            { search: 'fruita', subcategory_id: undefined },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+        vi.useRealTimers();
+    });
+
+    test('selecting a subcategory filters immediately without waiting', async () => {
+        const { router } = await import('@inertiajs/vue3');
+        const wrapper = mount(Index, {
+            props: { expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
+        });
+
+        await wrapper.find('select[aria-label="Filtra per subcategoria"]').setValue('10');
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/despeses',
+            { search: undefined, subcategory_id: 10 },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    });
+
+    test('the clear button resets the filters and is disabled when there is nothing to clear', async () => {
+        const { router } = await import('@inertiajs/vue3');
+        const wrapper = mount(Index, {
+            props: {
+                expenses: { data: [buildExpense()], prev_page_url: null, next_page_url: null },
+                filters: { search: 'fruita', subcategory_id: null },
+            },
+        });
+
+        const clearButton = wrapper.find('button[type="button"].btn-outline-secondary');
+        expect(clearButton.attributes('disabled')).toBeUndefined();
+
+        await clearButton.trigger('click');
+
+        expect(router.get).toHaveBeenCalledWith(
+            '/despeses',
+            { search: undefined, subcategory_id: undefined },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    });
+
+    test('shows a specific empty state when the search has no matches', () => {
+        const wrapper = mount(Index, {
+            props: {
+                expenses: { data: [], prev_page_url: null, next_page_url: null },
+                filters: { search: 'inexistent', subcategory_id: null },
+            },
+        });
+
+        expect(wrapper.text()).toContain('Cap despesa coincideix amb la cerca.');
     });
 });

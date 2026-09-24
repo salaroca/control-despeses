@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
@@ -7,11 +7,21 @@ const props = defineProps({
     year: { type: Number, required: true },
     budgets: { type: Array, required: true },
     actuals: { type: Array, required: true },
+    bankActuals: { type: Array, required: true },
 });
 
 const page = usePage();
 const categoriesList = computed(() => page.props.categoriesList);
 const banksList = computed(() => page.props.banksList);
+
+// The active tab lives in the URL (?tab=real) so it survives switching year.
+const activeTab = ref(new URLSearchParams(page.url.split('?')[1] ?? '').get('tab') === 'real' ? 'real' : 'budget');
+
+function yearHref(targetYear) {
+    return activeTab.value === 'real'
+        ? `/pressupostos?year=${targetYear}&tab=real`
+        : `/pressupostos?year=${targetYear}`;
+}
 
 const monthLabels = ['Gen', 'Feb', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Des'];
 const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -144,6 +154,51 @@ function allBanksMonthTotal(month) {
 function allBanksYearTotal() {
     return banksWithNone.value.reduce((total, bank) => total + bankYearTotal(bank.id), 0);
 }
+
+// --- "Real" tab: read-only real expense, same layout as the budget grid ---
+
+function getActual(subcategoryId, month) {
+    return actuals[cellKey(subcategoryId, month)];
+}
+
+function subcategoryActualTotal(subcategoryId) {
+    return months.reduce((total, month) => total + (getActual(subcategoryId, month) ?? 0), 0);
+}
+
+function categoryActualMonthTotal(category, month) {
+    return category.subcategories.reduce(
+        (total, subcategory) => total + (getActual(subcategory.id, month) ?? 0),
+        0,
+    );
+}
+
+function categoryActualYearTotal(category) {
+    return months.reduce((total, month) => total + categoryActualMonthTotal(category, month), 0);
+}
+
+function actualMonthTotal(month) {
+    return categoriesList.value.reduce((total, category) => total + categoryActualMonthTotal(category, month), 0);
+}
+
+function actualYearTotal() {
+    return months.reduce((total, month) => total + actualMonthTotal(month), 0);
+}
+
+// Unlike the budget bank table, this uses the bank set on each expense, which is
+// what the server groups by — an expense can be paid from a different bank than
+// the one assigned to its subcategory.
+const bankActuals = {};
+props.bankActuals.forEach((actual) => {
+    bankActuals[cellKey(actual.bank_id ?? 'none', actual.month)] = actual.total;
+});
+
+function bankActualMonthTotal(bankId, month) {
+    return bankActuals[cellKey(bankId ?? 'none', month)] ?? 0;
+}
+
+function bankActualYearTotal(bankId) {
+    return months.reduce((total, month) => total + bankActualMonthTotal(bankId, month), 0);
+}
 </script>
 
 <template>
@@ -156,10 +211,10 @@ function allBanksYearTotal() {
                 </div>
                 <div class="col-auto ms-auto d-print-none">
                     <div class="d-flex align-items-center gap-2">
-                        <Link :href="`/pressupostos?year=${year - 1}`" class="btn btn-outline-secondary btn-sm">
+                        <Link :href="yearHref(year - 1)" class="btn btn-outline-secondary btn-sm">
                             &laquo; {{ year - 1 }}
                         </Link>
-                        <Link :href="`/pressupostos?year=${year + 1}`" class="btn btn-outline-secondary btn-sm">
+                        <Link :href="yearHref(year + 1)" class="btn btn-outline-secondary btn-sm">
                             {{ year + 1 }} &raquo;
                         </Link>
                     </div>
@@ -169,6 +224,32 @@ function allBanksYearTotal() {
     </div>
     <div class="page-body">
     <div class="container-xxl">
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <button
+                    type="button"
+                    class="nav-link"
+                    :class="{ active: activeTab === 'budget' }"
+                    data-tab="budget"
+                    @click="activeTab = 'budget'"
+                >
+                    Pressupost
+                </button>
+            </li>
+            <li class="nav-item">
+                <button
+                    type="button"
+                    class="nav-link"
+                    :class="{ active: activeTab === 'real' }"
+                    data-tab="real"
+                    @click="activeTab = 'real'"
+                >
+                    Real
+                </button>
+            </li>
+        </ul>
+
+        <div v-if="activeTab === 'budget'">
         <h3 class="mb-2">Pressupost per subcategoria</h3>
         <p class="text-muted small">
             Introdueix l'import previst per a cada subcategoria i mes. Els canvis es desen automàticament
@@ -309,6 +390,162 @@ function allBanksYearTotal() {
                 </tfoot>
             </table>
         </div>
+        </div>
+
+        <div v-else>
+        <h3 class="mb-2">Despesa real per subcategoria</h3>
+        <p class="text-muted small">
+            El que s'ha gastat realment cada mes, sumant les despeses registrades. Només es pot consultar:
+            per canviar-ho, edita les despeses. Si la subcategoria té pressupost aquell mes, la casella es pinta
+            en <span class="text-success">verd</span> si t'hi has mantingut o en
+            <span class="text-danger">vermell</span> si t'has passat.
+        </p>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+                <thead>
+                    <tr class="table-light">
+                        <th style="position: sticky; left: 0; background: inherit; min-width: 130px;">
+                            Subcategoria
+                        </th>
+                        <th v-for="month in months" :key="month" class="text-center" style="min-width: 58px;">
+                            {{ monthLabels[month - 1] }}
+                        </th>
+                        <th class="text-end" style="min-width: 85px;">Total any</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template v-for="category in categoriesList" :key="category.id">
+                        <tr class="table-light" :data-actual-category-row="category.id">
+                            <td style="position: sticky; left: 0; background: inherit;" class="fw-semibold">
+                                {{ category.name }}
+                            </td>
+                            <td
+                                v-for="month in months"
+                                :key="month"
+                                class="text-end fw-semibold"
+                                :data-month="month"
+                            >
+                                {{ formatAmount(categoryActualMonthTotal(category, month)) }}
+                            </td>
+                            <td class="text-end fw-semibold">
+                                {{ formatAmount(categoryActualYearTotal(category)) }}
+                            </td>
+                        </tr>
+                        <tr
+                            v-for="subcategory in category.subcategories"
+                            :key="subcategory.id"
+                            :data-actual-subcategory-row="subcategory.id"
+                        >
+                            <td style="position: sticky; left: 0; background: inherit;" class="ps-4">
+                                {{ subcategory.name }}
+                            </td>
+                            <td
+                                v-for="month in months"
+                                :key="month"
+                                class="actual-cell text-end"
+                                :class="cellVariant(subcategory.id, month)"
+                                :data-month="month"
+                            >
+                                <span v-if="getActual(subcategory.id, month) !== undefined">
+                                    {{ formatAmount(getActual(subcategory.id, month)) }}
+                                </span>
+                                <span v-else class="text-muted">–</span>
+                            </td>
+                            <td class="text-end fw-semibold">
+                                {{ formatAmount(subcategoryActualTotal(subcategory.id)) }}
+                            </td>
+                        </tr>
+                        <tr v-if="category.subcategories.length === 0">
+                            <td :colspan="months.length + 2" class="text-muted small ps-4">
+                                Sense subcategories
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+                <tfoot>
+                    <tr class="table-light" data-actual-total-row>
+                        <td style="position: sticky; left: 0; background: inherit;" class="fw-bold">
+                            Total
+                        </td>
+                        <td
+                            v-for="month in months"
+                            :key="month"
+                            class="text-end fw-bold"
+                            :data-month="month"
+                        >
+                            {{ formatAmount(actualMonthTotal(month)) }}
+                        </td>
+                        <td class="text-end fw-bold">
+                            {{ formatAmount(actualYearTotal()) }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <h3 class="mt-4 mb-2">Despesa real per banc</h3>
+        <p class="text-muted small">
+            Suma de les despeses segons el banc amb què s'han pagat (el que tries a cada despesa).
+            Les despeses sense banc es compten a "Sense banc".
+        </p>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle">
+                <thead>
+                    <tr class="table-light">
+                        <th style="position: sticky; left: 0; background: inherit; min-width: 130px;">
+                            Banc
+                        </th>
+                        <th v-for="month in months" :key="month" class="text-center" style="min-width: 58px;">
+                            {{ monthLabels[month - 1] }}
+                        </th>
+                        <th class="text-end" style="min-width: 85px;">Total any</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        v-for="bank in banksWithNone"
+                        :key="bank.id ?? 'none'"
+                        :data-actual-bank-row="bank.id ?? 'none'"
+                    >
+                        <td style="position: sticky; left: 0; background: inherit;">
+                            {{ bank.name }}
+                        </td>
+                        <td
+                            v-for="month in months"
+                            :key="month"
+                            class="text-end"
+                            :data-month="month"
+                        >
+                            {{ formatAmount(bankActualMonthTotal(bank.id, month)) }}
+                        </td>
+                        <td class="text-end fw-semibold">
+                            {{ formatAmount(bankActualYearTotal(bank.id)) }}
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="table-light" data-actual-bank-row="total">
+                        <td style="position: sticky; left: 0; background: inherit;" class="fw-bold">
+                            Total
+                        </td>
+                        <td
+                            v-for="month in months"
+                            :key="month"
+                            class="text-end fw-bold"
+                            :data-month="month"
+                        >
+                            {{ formatAmount(actualMonthTotal(month)) }}
+                        </td>
+                        <td class="text-end fw-bold">
+                            {{ formatAmount(actualYearTotal()) }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        </div>
     </div>
     </div>
     </AppLayout>
@@ -317,6 +554,13 @@ function allBanksYearTotal() {
 <style scoped>
 .budget-cell {
     position: relative;
+}
+
+/* El vermell "table-danger" de Bootstrap és molt clar (pensat per a text sobre fons blanc).
+   Es reforça la intensitat perquè es distingeixi d'un cop d'ull a la graella. */
+.budget-cell.table-danger,
+.actual-cell.table-danger {
+    background-color: rgba(220, 53, 69, 0.35);
 }
 
 .budget-tooltip {

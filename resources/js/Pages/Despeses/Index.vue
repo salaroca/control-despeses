@@ -1,17 +1,46 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { IconPencil, IconTrash } from '@tabler/icons-vue';
+import { IconPencil, IconSearch, IconTrash, IconX } from '@tabler/icons-vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import ExpenseForm from './Partials/ExpenseForm.vue';
 
-defineProps({
+const props = defineProps({
     expenses: { type: Object, required: true },
+    filters: { type: Object, required: true },
 });
 
 const page = usePage();
 const categoriesList = computed(() => page.props.categoriesList);
 const banksList = computed(() => page.props.banksList);
+
+const searchTerm = ref(props.filters.search ?? '');
+const subcategoryFilter = ref(props.filters.subcategory_id ?? '');
+let searchDebounce = null;
+
+function applyFilters() {
+    router.get(
+        '/despeses',
+        {
+            search: searchTerm.value || undefined,
+            subcategory_id: subcategoryFilter.value || undefined,
+        },
+        { preserveState: true, preserveScroll: true, replace: true },
+    );
+}
+
+function onSearchInput() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(applyFilters, 300);
+}
+
+function clearFilters() {
+    searchTerm.value = '';
+    subcategoryFilter.value = '';
+    applyFilters();
+}
+
+const hasActiveFilters = computed(() => searchTerm.value !== '' || subcategoryFilter.value !== '');
 
 function emptyExpenseData() {
     return {
@@ -108,7 +137,61 @@ function formatDate(date) {
             </div>
         </div>
 
-        <div v-if="expenses.data.length === 0" class="text-center text-muted py-5">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Cerca a la nota</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><IconSearch :size="16" /></span>
+                            <input
+                                v-model="searchTerm"
+                                type="text"
+                                class="form-control"
+                                placeholder="Cerca per text a la nota..."
+                                @input="onSearchInput"
+                            >
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Subcategoria</label>
+                        <select
+                            v-model="subcategoryFilter"
+                            class="form-select"
+                            aria-label="Filtra per subcategoria"
+                            @change="applyFilters"
+                        >
+                            <option value="">Totes</option>
+                            <optgroup v-for="category in categoriesList" :key="category.id" :label="category.name">
+                                <option
+                                    v-for="subcategory in category.subcategories"
+                                    :key="subcategory.id"
+                                    :value="subcategory.id"
+                                >
+                                    {{ subcategory.name }}
+                                </option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary w-100"
+                            :disabled="!hasActiveFilters"
+                            @click="clearFilters"
+                        >
+                            <IconX :size="16" /> Neteja
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="expenses.data.length === 0 && hasActiveFilters" class="text-center text-muted py-5">
+            Cap despesa coincideix amb la cerca.
+        </div>
+
+        <div v-else-if="expenses.data.length === 0" class="text-center text-muted py-5">
             Encara no hi ha despeses registrades.
         </div>
 

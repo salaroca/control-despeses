@@ -7,6 +7,7 @@ use App\Models\Budget;
 use App\Models\Expense;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,25 +21,36 @@ class BudgetController extends Controller
             ->where('year', $year)
             ->get(['subcategory_id', 'month', 'amount']);
 
-        $actuals = collect(range(1, 12))
+        return Inertia::render('Pressupostos/Index', [
+            'year' => $year,
+            'budgets' => $budgets,
+            'actuals' => $this->monthlyExpenseTotals($year, 'subcategory_id'),
+            // Grouped by the bank set on each expense (not the subcategory's bank),
+            // so it reflects which account the money actually came out of.
+            'bankActuals' => $this->monthlyExpenseTotals($year, 'bank_id'),
+        ]);
+    }
+
+    /**
+     * Real expense per month for the given year, summed by the given expense column.
+     *
+     * @return Collection<int, array{month: int, total: float}>
+     */
+    private function monthlyExpenseTotals(int $year, string $groupColumn): Collection
+    {
+        return collect(range(1, 12))
             ->flatMap(fn (int $month) => Expense::query()
                 ->whereYear('date', $year)
                 ->whereMonth('date', $month)
-                ->selectRaw('subcategory_id, SUM(amount) as total')
-                ->groupBy('subcategory_id')
+                ->selectRaw("{$groupColumn}, SUM(amount) as total")
+                ->groupBy($groupColumn)
                 ->get()
                 ->map(fn ($row) => [
-                    'subcategory_id' => $row->subcategory_id,
+                    $groupColumn => $row->{$groupColumn},
                     'month' => $month,
                     'total' => (float) $row->total,
                 ]))
             ->values();
-
-        return Inertia::render('Pressupostos/Index', [
-            'year' => $year,
-            'budgets' => $budgets,
-            'actuals' => $actuals,
-        ]);
     }
 
     public function upsert(StoreBudgetRequest $request): RedirectResponse

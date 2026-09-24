@@ -15,22 +15,32 @@ const categoriesList = [
 
 const banksList = [{ id: 100, name: 'Banc A' }];
 
+let pageUrl = '/pressupostos';
+
 vi.mock('@inertiajs/vue3', () => ({
-    usePage: () => ({ props: { categoriesList, banksList }, url: '/pressupostos' }),
+    usePage: () => ({ props: { categoriesList, banksList }, url: pageUrl }),
     router: { post: vi.fn() },
     Link: { props: ['href'], template: '<a :href="href"><slot /></a>' },
 }));
 
 beforeEach(() => {
     vi.clearAllMocks();
+    pageUrl = '/pressupostos';
 });
 
 afterEach(() => {
     vi.restoreAllMocks();
 });
 
-function mountIndex(budgets = [], actuals = []) {
-    return mount(Index, { props: { year: 2026, budgets, actuals } });
+function mountIndex(budgets = [], actuals = [], bankActuals = []) {
+    return mount(Index, { props: { year: 2026, budgets, actuals, bankActuals } });
+}
+
+async function mountRealTab(budgets = [], actuals = [], bankActuals = []) {
+    const wrapper = mountIndex(budgets, actuals, bankActuals);
+    await wrapper.find('button[data-tab="real"]').trigger('click');
+
+    return wrapper;
 }
 
 describe('Pressupostos/Index', () => {
@@ -177,5 +187,84 @@ describe('Pressupostos/Index', () => {
         expect(totalRow.find('td[data-month="3"]').text()).toContain('75,00');
         expect(totalRow.find('td[data-month="4"]').text()).toContain('20,00');
         expect(totalRow.text()).toContain('95,00');
+    });
+
+    test('shows the budget tab by default', () => {
+        const wrapper = mountIndex();
+
+        expect(wrapper.find('button[data-tab="budget"]').classes()).toContain('active');
+        expect(wrapper.find('input[aria-label="Electricitat - Gen"]').exists()).toBe(true);
+        expect(wrapper.find('tr[data-actual-total-row]').exists()).toBe(false);
+    });
+
+    test('switching to the real tab shows the real expense instead of the budget inputs', async () => {
+        const wrapper = await mountRealTab([], [{ subcategory_id: 10, month: 3, total: 45 }]);
+
+        expect(wrapper.find('button[data-tab="real"]').classes()).toContain('active');
+        expect(wrapper.find('input[aria-label="Electricitat - Gen"]').exists()).toBe(false);
+
+        const row = wrapper.find('tr[data-actual-subcategory-row="10"]');
+        expect(row.find('td[data-month="3"]').text()).toContain('45,00');
+        expect(row.find('td[data-month="4"]').text()).toBe('–');
+    });
+
+    test('opens the real tab when the URL asks for it, and keeps it in the year links', () => {
+        pageUrl = '/pressupostos?year=2026&tab=real';
+        const wrapper = mountIndex();
+
+        expect(wrapper.find('button[data-tab="real"]').classes()).toContain('active');
+        const links = wrapper.findAll('a');
+        expect(links.some((link) => link.attributes('href') === '/pressupostos?year=2025&tab=real')).toBe(true);
+    });
+
+    test('real tab shows a subtotal per category and a general total row', async () => {
+        const wrapper = await mountRealTab([], [
+            { subcategory_id: 10, month: 3, total: 45 },
+            { subcategory_id: 11, month: 3, total: 10 },
+            { subcategory_id: 10, month: 4, total: 5 },
+        ]);
+
+        const categoryRow = wrapper.find('tr[data-actual-category-row="1"]');
+        expect(categoryRow.find('td[data-month="3"]').text()).toContain('55,00');
+
+        const totalRow = wrapper.find('tr[data-actual-total-row]');
+        expect(totalRow.find('td[data-month="3"]').text()).toContain('55,00');
+        expect(totalRow.find('td[data-month="4"]').text()).toContain('5,00');
+        expect(totalRow.text()).toContain('60,00');
+    });
+
+    test('real tab colors a cell red or green against the budget, and leaves it plain without budget', async () => {
+        const wrapper = await mountRealTab(
+            [
+                { subcategory_id: 10, month: 3, amount: '40.00' },
+                { subcategory_id: 10, month: 4, amount: '40.00' },
+            ],
+            [
+                { subcategory_id: 10, month: 3, total: 45 },
+                { subcategory_id: 10, month: 4, total: 30 },
+                { subcategory_id: 10, month: 5, total: 30 },
+            ],
+        );
+
+        const row = wrapper.find('tr[data-actual-subcategory-row="10"]');
+        expect(row.find('td[data-month="3"]').classes()).toContain('table-danger');
+        expect(row.find('td[data-month="4"]').classes()).toContain('table-success');
+        expect(row.find('td[data-month="5"]').classes()).not.toContain('table-success');
+        expect(row.find('td[data-month="5"]').classes()).not.toContain('table-danger');
+    });
+
+    test('real tab shows the real expense per bank, with "Sense banc" and a total', async () => {
+        const wrapper = await mountRealTab(
+            [],
+            [{ subcategory_id: 10, month: 3, total: 62 }],
+            [
+                { bank_id: 100, month: 3, total: 50 },
+                { bank_id: null, month: 3, total: 12 },
+            ],
+        );
+
+        expect(wrapper.find('tr[data-actual-bank-row="100"] td[data-month="3"]').text()).toContain('50,00');
+        expect(wrapper.find('tr[data-actual-bank-row="none"] td[data-month="3"]').text()).toContain('12,00');
+        expect(wrapper.find('tr[data-actual-bank-row="total"] td[data-month="3"]').text()).toContain('62,00');
     });
 });

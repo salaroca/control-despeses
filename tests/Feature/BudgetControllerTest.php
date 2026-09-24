@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Bank;
 use App\Models\Budget;
 use App\Models\Category;
 use App\Models\User;
@@ -35,6 +36,28 @@ test('the budgets index page renders the budgets for the requested year', functi
             'month' => 3,
             'total' => 45,
         ])
+    );
+});
+
+test('the budgets index page sends the real expense per bank, using the bank of each expense', function () {
+    $subcategory = createBudgetSubcategory();
+    $bank = Bank::create(['name' => 'Banc A']);
+
+    $subcategory->expenses()->create(['amount' => 30, 'date' => '2026-03-05', 'bank_id' => $bank->id]);
+    $subcategory->expenses()->create(['amount' => 20, 'date' => '2026-03-15', 'bank_id' => $bank->id]);
+    $subcategory->expenses()->create(['amount' => 12, 'date' => '2026-03-20']);
+    $subcategory->expenses()->create(['amount' => 99, 'date' => '2027-03-20', 'bank_id' => $bank->id]);
+
+    $response = $this->get('/pressupostos?year=2026');
+
+    $response->assertInertia(fn ($page) => $page
+        ->has('bankActuals', 2)
+        ->where('bankActuals', fn ($rows) => collect($rows)->contains(fn ($row) => $row['bank_id'] === $bank->id
+                && $row['month'] === 3
+                && (float) $row['total'] === 50.0)
+            && collect($rows)->contains(fn ($row) => $row['bank_id'] === null
+                && $row['month'] === 3
+                && (float) $row['total'] === 12.0))
     );
 });
 
