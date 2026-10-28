@@ -8,6 +8,7 @@ import ExpenseForm from './Partials/ExpenseForm.vue';
 const props = defineProps({
     expenses: { type: Object, required: true },
     filters: { type: Object, required: true },
+    lastEntryByBank: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -17,6 +18,29 @@ const banksList = computed(() => page.props.banksList);
 const searchTerm = ref(props.filters.search ?? '');
 const subcategoryFilter = ref(props.filters.subcategory_id ?? '');
 let searchDebounce = null;
+
+// "19/10/2026 (fa 4 dies)": the day each bank is filled in up to, since expenses are not
+// entered every day. Days are counted against the browser's today.
+function describeLastEntry(isoDate) {
+    if (!isoDate) {
+        return 'cap despesa';
+    }
+
+    const [year, month, day] = isoDate.split('-').map(Number);
+    const formattedDate = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+    const today = new Date();
+    const daysAgo = Math.round(
+        (Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) - Date.UTC(year, month - 1, day)) / 86400000,
+    );
+
+    if (daysAgo < 0) {
+        return formattedDate;
+    }
+
+    const relative = daysAgo === 0 ? 'avui' : daysAgo === 1 ? 'ahir' : `fa ${daysAgo} dies`;
+
+    return `${formattedDate} (${relative})`;
+}
 
 function applyFilters() {
     router.get(
@@ -122,6 +146,13 @@ function formatDate(date) {
     </div>
     <div class="page-body">
     <div class="container-xl">
+        <p v-if="lastEntryByBank.length" class="text-secondary mb-3 last-entry">
+            <span class="me-1">Última entrada —</span>
+            <template v-for="(bank, index) in lastEntryByBank" :key="bank.name">
+                <span v-if="index > 0" class="mx-1">·</span>
+                <span>{{ bank.name }}: <strong>{{ describeLastEntry(bank.date) }}</strong></span>
+            </template>
+        </p>
         <div class="card mb-4">
             <div class="card-header">
                 <h3 class="card-title">Afegeix una despesa</h3>

@@ -200,4 +200,38 @@ describe('Despeses/Index', () => {
 
         expect(wrapper.text()).toContain('Cap despesa coincideix amb la cerca.');
     });
+
+    test('shows the date of the last expense of each bank, relative to today', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date(2026, 9, 19, 12, 0));
+
+        const wrapper = mount(Index, {
+            props: {
+                expenses: { data: [], prev_page_url: null, next_page_url: null },
+                filters: emptyFilters,
+                lastEntryByBank: [
+                    { name: 'Bankinter', date: '2026-10-15' },
+                    { name: 'CaixaBanc', date: '2026-10-19' },
+                    { name: 'Banc nou', date: null },
+                    { name: 'Banc B', date: '2026-10-18' },
+                ],
+            },
+        });
+
+        const text = wrapper.find('.last-entry').text();
+        expect(text).toContain('Bankinter: 15/10/2026 (fa 4 dies)');
+        expect(text).toContain('CaixaBanc: 19/10/2026 (avui)');
+        expect(text).toContain('Banc B: 18/10/2026 (ahir)');
+        expect(text).toContain('Banc nou: cap despesa');
+
+        vi.useRealTimers();
+    });
+
+    test('hides the last entry line when there are no banks', () => {
+        const wrapper = mount(Index, {
+            props: { expenses: { data: [], prev_page_url: null, next_page_url: null }, filters: emptyFilters },
+        });
+
+        expect(wrapper.find('.last-entry').exists()).toBe(false);
+    });
 });

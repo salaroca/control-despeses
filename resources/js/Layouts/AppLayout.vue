@@ -7,6 +7,7 @@ import {
     IconLogout,
     IconMoon,
     IconPigMoney,
+    IconShoppingCart,
     IconSun,
     IconTags,
     IconWallet,
@@ -21,7 +22,13 @@ const navItems = [
     { href: '/categories', label: 'Categories', icon: IconTags },
     { href: '/bancs', label: 'Bancs', icon: IconBuildingBank },
     { href: '/pressupostos', label: 'Pressupostos', icon: IconPigMoney },
+    // One entry for the whole prices section; its pages switch between them with tabs.
+    { href: '/preus', label: 'Preus', icon: IconShoppingCart, activePaths: ['/preus', '/preus/comparativa', '/articles', '/botigues'] },
 ];
+
+function isActive(item) {
+    return currentPath.value === item.href || (item.activePaths ?? []).includes(currentPath.value);
+}
 
 function logout() {
     router.post('/logout');
@@ -60,7 +67,7 @@ function toggleTheme() {
                         <Link
                             :href="item.href"
                             class="nav-link d-flex align-items-center gap-1"
-                            :class="{ active: currentPath === item.href }"
+                            :class="{ active: isActive(item) }"
                         >
                             <span class="nav-link-icon">
                                 <component :is="item.icon" :size="18" />

@@ -53,4 +53,15 @@ describe('AppLayout', () => {
         expect(categoriesLink.classes()).toContain('active');
         expect(expensesLink.classes()).not.toContain('active');
     });
+
+    test('the "Preus" entry is active on the prices, products and shops pages', () => {
+        currentUrl = '/botigues';
+        const wrapper = mount(AppLayout);
+
+        const pricesLink = wrapper.find('a[href="/preus"]');
+        expect(pricesLink.text()).toContain('Preus');
+        expect(pricesLink.classes()).toContain('active');
+
+        currentUrl = '/despeses';
+    });
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
+use App\Models\Bank;
 use App\Models\Expense;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,27 @@ class ExpenseController extends Controller
                 'search' => $search !== '' ? $search : null,
                 'subcategory_id' => $subcategoryId,
             ],
+            'lastEntryByBank' => $this->lastEntryByBank(),
         ]);
+    }
+
+    /**
+     * Date of the most recent expense of each bank (null if it has none yet), so the user can see
+     * up to which day each bank is filled in. Uses the expense date, not when it was typed in.
+     *
+     * @return array<int, array{name: string, date: string|null}>
+     */
+    private function lastEntryByBank(): array
+    {
+        return Bank::query()
+            ->withMax('expenses', 'date')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Bank $bank) => [
+                'name' => $bank->name,
+                'date' => $bank->expenses_max_date ? substr($bank->expenses_max_date, 0, 10) : null,
+            ])
+            ->all();
     }
 
     public function store(StoreExpenseRequest $request): RedirectResponse

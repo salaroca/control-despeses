@@ -202,3 +202,24 @@ test('an expense can be deleted', function () {
     $response->assertRedirect();
     expect(Expense::count())->toBe(0);
 });
+
+test('the expenses index sends the date of the latest expense of each bank', function () {
+    $subcategory = createSubcategory();
+    $caixa = Bank::create(['name' => 'CaixaBanc']);
+    $bankinter = Bank::create(['name' => 'Bankinter']);
+    Bank::create(['name' => 'Sense moviments']);
+
+    $subcategory->expenses()->create(['amount' => 10, 'date' => '2026-10-19', 'bank_id' => $caixa->id]);
+    $subcategory->expenses()->create(['amount' => 10, 'date' => '2026-10-02', 'bank_id' => $caixa->id]);
+    $subcategory->expenses()->create(['amount' => 10, 'date' => '2026-10-15', 'bank_id' => $bankinter->id]);
+    // An expense without bank must not count for any bank.
+    $subcategory->expenses()->create(['amount' => 10, 'date' => '2026-12-31']);
+
+    $this->get('/despeses')->assertInertia(fn ($page) => $page
+        ->where('lastEntryByBank', [
+            ['name' => 'Bankinter', 'date' => '2026-10-15'],
+            ['name' => 'CaixaBanc', 'date' => '2026-10-19'],
+            ['name' => 'Sense moviments', 'date' => null],
+        ])
+    );
+});

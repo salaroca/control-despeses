@@ -6,6 +6,9 @@ use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\PriceController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubcategoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +42,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/bancs', [BankController::class, 'store'])->name('banks.store');
     Route::put('/bancs/{bank}', [BankController::class, 'update'])->name('banks.update');
     Route::delete('/bancs/{bank}', [BankController::class, 'destroy'])->name('banks.destroy');
+
+    Route::get('/preus', [PriceController::class, 'index'])->name('prices.index');
+    Route::get('/preus/comparativa', [PriceController::class, 'comparison'])->name('prices.comparison');
+    Route::post('/preus', [PriceController::class, 'store'])->name('prices.store');
+    Route::put('/preus/{price}', [PriceController::class, 'update'])->name('prices.update');
+    Route::delete('/preus/{price}', [PriceController::class, 'destroy'])->name('prices.destroy');
+
+    Route::get('/articles', [ProductController::class, 'index'])->name('products.index');
+    Route::post('/articles', [ProductController::class, 'store'])->name('products.store');
+    Route::put('/articles/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/articles/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    Route::get('/botigues', [ShopController::class, 'index'])->name('shops.index');
+    Route::post('/botigues', [ShopController::class, 'store'])->name('shops.store');
+    Route::put('/botigues/{shop}', [ShopController::class, 'update'])->name('shops.update');
+    Route::delete('/botigues/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy');
 
     Route::get('/pressupostos', [BudgetController::class, 'index'])->name('budgets.index');
     Route::post('/pressupostos', [BudgetController::class, 'upsert'])->name('budgets.upsert');

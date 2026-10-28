@@ -37,4 +37,15 @@ describe('DeviationTrendChart', () => {
         const chart = wrapper.findComponent(Bar);
         expect(chart.props('data').datasets[0].backgroundColor).toEqual(['#2fb344', '#d63939']);
     });
+
+    test('keeps tiny deviations visible with a minimum bar height', async () => {
+        const { Bar } = await import('vue-chartjs');
+        const items = [
+            { label: 'Jul 26', deviation: -5.69 },
+            { label: 'Oct 26', deviation: 1514 },
+        ];
+        const wrapper = mount(DeviationTrendChart, { props: { items } });
+
+        expect(wrapper.findComponent(Bar).props('data').datasets[0].minBarLength).toBe(4);
+    });
 });

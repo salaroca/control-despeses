@@ -30,6 +30,9 @@ const chartData = computed(() => ({
             backgroundColor: props.items.map((item) => (item.deviation >= 0 ? GOOD_COLOR : CRITICAL_COLOR)),
             borderRadius: 4,
             maxBarThickness: 32,
+            // A month almost on budget (e.g. −6 € next to +1.500 €) would be thinner than a pixel;
+            // a minimum height keeps it visible, with its color, so it never looks like missing data.
+            minBarLength: 4,
         },
     ],
 }));
